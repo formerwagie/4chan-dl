@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Get the current user's username
+current_user=$(whoami)
+
+# Location of the 4chan downloader script
+downloader_script="/home/$current_user/.local/bin/4chan"
+
+# Directory containing the log files
+log_directory="/home/$current_user/.local/state/4chan"
+
+# Iterate over the log files
+for log_file in "$log_directory"/*.txt; do
+    # Extract thread URL and output directory from the log file
+    thread_url=$(grep -oP '(?<=4chan Thread: ).+' "$log_file")
+    output_directory=$(grep -oP '(?<=Output Directory: ).+' "$log_file")
+
+    echo "Updating thread: $thread_url"
+    echo "Output Directory: $output_directory"
+
+    # Invoke the 4chan downloader script with the thread URL and output directory
+    "$downloader_script" -o "$output_directory" "$thread_url"
+done
