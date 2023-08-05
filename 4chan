@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import requests
+from bs4 import BeautifulSoup
+import shutil
+
+# Function to print script usage instructions
+def print_usage():
+    print("Usage: ./4chan [-o output_directory] thread_link")
+    print("Options:")
+    print("  -o output_directory  Set the output directory")
+    print("  thread_link          Specify the 4chan thread link")
+
+# Default values
+output_dir = None
+
+# Get username
+current_user = os.getlogin()
+
+# Parse command-line options
+args = sys.argv[1:]
+while len(args) > 1:
+    option = args.pop(0)
+    if option == "-o":
+        output_dir = args.pop(0)
+    else:
+        print("Invalid option:", option)
+        print_usage()
+        sys.exit(1)
+
+# Check if a thread link is provided
+if len(args) != 1:
+    print("Please provide a 4chan thread link.")
+    print_usage()
+    sys.exit(1)
+
+thread_link = args[0]
+
+# Extract the thread ID from the thread link
+thread_id = thread_link.split("/")[-1]
+
+# Check if the thread URL is already present in the log files
+log_directory = f"/home/{current_user}/.local/state/4chan"
+log_filename = os.path.join(log_directory, f"4chan_thread_{thread_id}_log.txt")
+
+if os.path.exists(log_filename):
+    with open(log_filename, "r") as log_file:
+        log_content = log_file.read()
+        log_lines = log_content.split('\n')
+        for line in log_lines:
+            if line.startswith("4chan Thread:"):
+                existing_thread_link = line.replace("4chan Thread: ", "")
+                break
+        else:
+            existing_thread_link = None
+
+    if existing_thread_link:
+        print("Thread link found in log files. Using existing entry.")
+        thread_link = existing_thread_link
+        for line in log_lines:
+            if line.startswith("Output Directory:"):
+                output_dir = line.replace("Output Directory: ", "")
+                break
+
+# Capture the current working directory if output directory is not specified
+if output_dir is None:
+    output_dir = os.getcwd()
+
+# Create the output directory if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+
+# Create a log file with the thread and output directory details
+log_filename = os.path.join(log_directory, f"4chan_thread_{thread_id}_log.txt")
+
+# Write the thread and output directory details to the log file
+log_content = f"4chan Thread: {thread_link}\n"
+log_content += f"Output Directory: {os.path.abspath(output_dir)}\n"
+with open(log_filename, "w") as log_file:
+    log_file.write(log_content)
+
+# Change the current working directory to the output directory
+os.chdir(output_dir)
+
+# Download the thread page
+try:
+    response = requests.get(thread_link)
+    response.raise_for_status()
+    html = response.text
+except requests.exceptions.RequestException as e:
+    print("Error occurred while downloading the thread page:", str(e))
+    sys.exit(1)
+
+# Parse the HTML with BeautifulSoup
+soup = BeautifulSoup(html, "html.parser")
+
+# Find all the media file links in the thread
+media_links = soup.select('a[class^="fileThumb"]')
+
+# Download each media file
+for link in media_links:
+    media_url = "https:" + link["href"]
+    filename = os.path.basename(media_url)
+    if os.path.exists(filename):
+        print("Skipping", filename, "- Already downloaded")
+        continue
+    try:
+        response = requests.get(media_url, stream=True)
+        response.raise_for_status()
+        with open(filename, "wb") as file:
+            shutil.copyfileobj(response.raw, file)
+        print("Downloaded:", filename)
+    except requests.exceptions.RequestException as e:
+        print("Error occurred while downloading", media_url, ":", str(e))
+
+print("Download complete.")
