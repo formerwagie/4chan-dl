@@ -1,21 +1,25 @@
 # 4chan-dl
-download media from 4chan threads. previously downloaded threads are saved to a log file. use 4chan-update to download new media.
 
-compatibility:
-linux
+A script to download media from 4chan threads. Previously downloaded threads are saved to a log file. Use `4chan-update` to download new media.
 
-about:
-this is by no means faster than other scripts to download 4chan threads. however, it suits my needs as it allows a user to specify unique output directories for each thread.
+## Compatibility
 
-install:
-place 4chan and 4chan-update in your .local/bin folder. call them from the cli.
+Linux
 
-usage:
-  4chan -o "/output/directory" "thread_url"
-    if you do not specify an output directory, the script will download media to the current working directory.
-    if you pass a URL that is already present in the logs, the script will ignore your output directory argument and use the one in the log file instead.
+## About
 
+This script might not be the fastest way to download 4chan threads, but it suits my needs as it allows users to specify unique output directories for each thread.
 
-  4chan-update
-    running this command will search the log files (/home/user/.local/state/4chan) and update all of the threads in one go.
+## Installation
 
+1. Place `4chan` and `4chan-update` in your `.local/bin` folder.
+2. Call them from the command line.
+
+## Usage
+
+### Downloading Threads
+
+To download a thread, use the following command:
+
+```bash
+4chan -o "/output/directory" "thread_url"
