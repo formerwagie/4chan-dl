@@ -10,6 +10,13 @@ Linux
 
 This script might not be the fastest way to download 4chan threads, but it suits my needs as it allows users to specify unique output directories for each thread.
 
+## Requirements
+
+- Python 3.x
+- The following Python packages:
+  - requests
+  - beautifulsoup4
+
 ## Installation
 
 1. Place `4chan` and `4chan-update` in your `.local/bin` folder.
